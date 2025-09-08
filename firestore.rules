@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        // Prefer custom claim when present
+        request.auth.token.admin == true ||
+        // Fallback to presence in admins collection
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Admins collection: only admins can read/write; users cannot self-add here
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      // Only existing admins can create/update/delete admin documents
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{uid} {
+      // Users can read and update their own profile
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      // Prevent users from deleting themselves; allow admins
+      allow delete: if isAdmin();
+    }
+
+    // Example admin-only collections (adjust as needed for your schema)
+    match /city_cards/{docId} {
+      allow read: if true; // public read (optional). Change to isAdmin() to lock down
+      allow write: if isAdmin();
+    }
+
+    // Chat threads (DM)
+    match /threads/{threadId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid in resource.data.participants);
+      // Admins can create; users can create only if they are participants in the payload
+      allow create: if isAdmin() || (isSignedIn() && request.resource.data.participants.hasAny([request.auth.uid]));
+      // Allow admins to update; users can update only metadata that includes themselves
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid in resource.data.participants);
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/threads/$(threadId)).data.participants);
+        allow create: if isAdmin() || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/threads/$(threadId)).data.participants);
+        allow update, delete: if false; // immutable messages
+      }
+    }
+
+    // Groups
+    match /groups/{groupId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid in resource.data.members);
+      // Admins can create/update; users cannot create groups from client (adjust if needed)
+      allow create, update, delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members);
+        allow create: if isAdmin() || (isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members);
+        // Allow admins to delete any message; users cannot delete
+        allow delete: if isAdmin();
+        allow update: if false;
+      }
+    }
+
+    // Default rule for all other documents: admins only
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
