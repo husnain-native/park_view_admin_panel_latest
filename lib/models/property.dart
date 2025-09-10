@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
 
-enum PropertyType { commercial, residential, buy, rent }
+enum PropertyType {
+  commercial('Commercial', Icons.business),
+  residential('Residential', Icons.home),
+  buy('Buy', Icons.shopping_cart),
+  rent('Rent', Icons.key),
+  plot('Plot', Icons.terrain),
+  apartment('Apartment', Icons.apartment);
 
-enum PropertyStatus { available, sold, rented, underContract }
+  final String label;
+  final IconData icon;
+  const PropertyType(this.label, this.icon);
+}
 
-extension PropertyStatusX on PropertyStatus {
-  String get label {
-    switch (this) {
-      case PropertyStatus.available:
-        return 'Available';
-      case PropertyStatus.sold:
-        return 'Sold';
-      case PropertyStatus.rented:
-        return 'Rented';
-      case PropertyStatus.underContract:
-        return 'Under Contract';
-    }
-  }
+enum PropertyStatus {
+  available('Available'),
+  sold('Sold'),
+  rented('Rented'),
+  underContract('Under Contract');
+
+  final String label;
+  const PropertyStatus(this.label);
+}
+
+enum PropertyApprovalStatus {
+  pending('Pending'),
+  approved('Approved'),
+  rejected('Rejected');
+
+  final String label;
+  const PropertyApprovalStatus(this.label);
 }
 
 class Property {
@@ -29,13 +42,15 @@ class Property {
   final String location;
   final int bedrooms;
   final int bathrooms;
-  final double area; // in sq ft
+  final double area;
   final List<String> imageUrls;
   final String agentName;
   final String agentId;
   final DateTime createdAt;
   final bool isFeatured;
   final Map<String, dynamic> amenities;
+  final PropertyApprovalStatus approvalStatus;
+  final String createdBy; // 'admin' or user UID
 
   const Property({
     required this.id,
@@ -54,38 +69,17 @@ class Property {
     required this.createdAt,
     this.isFeatured = false,
     this.amenities = const {},
+    required this.approvalStatus,
+    required this.createdBy,
   });
 
-  // Create a Property from a Map (useful for Firebase data)
-  factory Property.fromMap(String id, Map<String, dynamic> map) {
-    return Property(
-      id: id,
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      price: (map['price'] ?? 0).toDouble(),
-      type: _parsePropertyType(map['type']),
-      status: _parsePropertyStatus(map['status']),
-      location: map['location'] ?? '',
-      bedrooms: map['bedrooms'] ?? 0,
-      bathrooms: map['bathrooms'] ?? 0,
-      area: (map['area'] ?? 0).toDouble(),
-      imageUrls: List<String>.from(map['imageUrls'] ?? []),
-      agentName: map['agentName'] ?? '',
-      agentId: map['agentId'] ?? '',
-      createdAt: DateTime.parse(map['createdAt']),
-      isFeatured: map['isFeatured'] ?? false,
-      amenities: Map<String, dynamic>.from(map['amenities'] ?? {}),
-    );
-  }
-
-  // Convert to Map (useful for saving to Firebase)
   Map<String, dynamic> toMap() {
     return {
       'title': title,
       'description': description,
       'price': price,
-      'type': type.toString().split('.').last,
-      'status': status.toString().split('.').last,
+      'type': type.name,
+      'status': status.name,
       'location': location,
       'bedrooms': bedrooms,
       'bathrooms': bathrooms,
@@ -96,28 +90,72 @@ class Property {
       'createdAt': createdAt.toIso8601String(),
       'isFeatured': isFeatured,
       'amenities': amenities,
+      'approvalStatus': approvalStatus.name,
+      'createdBy': createdBy,
     };
   }
 
-  // Helper methods to parse enums from strings
-  static PropertyType _parsePropertyType(String type) {
-    switch (type) {
-      case 'commercial': return PropertyType.commercial;
-      case 'residential': return PropertyType.residential;
-      case 'buy': return PropertyType.buy;
-      case 'rent': return PropertyType.rent;
-      default: return PropertyType.residential;
+  factory Property.fromMap(String id, Map<String, dynamic> map) {
+    return Property(
+      id: id,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
+      type: _parsePropertyType(map['type']),
+      status: _parsePropertyStatus(map['status']),
+      location: map['location'] ?? '',
+      bedrooms: (map['bedrooms'] is int ? map['bedrooms'] : int.tryParse('${map['bedrooms']}') ?? 0),
+      bathrooms: (map['bathrooms'] is int ? map['bathrooms'] : int.tryParse('${map['bathrooms']}') ?? 0),
+      area: (map['area'] ?? 0).toDouble(),
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+      agentName: map['agentName'] ?? '',
+      agentId: map['agentId'] ?? '',
+      createdAt: _parseDateTime(map['createdAt']),
+      isFeatured: map['isFeatured'] ?? false,
+      amenities: Map<String, dynamic>.from(map['amenities'] ?? {}),
+      approvalStatus: _parseApprovalStatus(map['approvalStatus']),
+      createdBy: map['createdBy'] ?? 'admin',
+    );
+  }
+
+  static PropertyType _parsePropertyType(dynamic type) {
+    final String value = (type ?? 'residential').toString();
+    try {
+      return PropertyType.values.byName(value);
+    } catch (_) {
+      return PropertyType.residential;
     }
   }
 
-  static PropertyStatus _parsePropertyStatus(String status) {
-    switch (status) {
-      case 'available': return PropertyStatus.available;
-      case 'sold': return PropertyStatus.sold;
-      case 'rented': return PropertyStatus.rented;
-      case 'underContract': return PropertyStatus.underContract;
-      default: return PropertyStatus.available;
+  static PropertyStatus _parsePropertyStatus(dynamic status) {
+    final String value = (status ?? 'available').toString();
+    try {
+      return PropertyStatus.values.byName(value);
+    } catch (_) {
+      return PropertyStatus.available;
     }
+  }
+
+  static PropertyApprovalStatus _parseApprovalStatus(dynamic status) {
+    final String value = (status ?? 'approved').toString();
+    try {
+      return PropertyApprovalStatus.values.byName(value);
+    } catch (_) {
+      return PropertyApprovalStatus.approved;
+    }
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    try {
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      }
+      if (value is String) {
+        return DateTime.parse(value);
+      }
+    } catch (_) {}
+    return DateTime.now();
   }
 
   String get formattedPrice {
@@ -138,56 +176,20 @@ class Property {
   }
 
   String get typeLabel {
-    switch (type) {
-      case PropertyType.commercial:
-        return 'Commercial';
-      case PropertyType.residential:
-        return 'Residential';
-      case PropertyType.buy:
-        return 'Buy';
-      case PropertyType.rent:
-        return 'Rent';
-    }
+    return type.label;
   }
 
   String get statusLabel {
-    switch (status) {
-      case PropertyStatus.available:
-        return 'Available';
-      case PropertyStatus.sold:
-        return 'Sold';
-      case PropertyStatus.rented:
-        return 'Rented';
-      case PropertyStatus.underContract:
-        return 'Under Contract';
-    }
+    return status.label;
   }
 }
 
 extension PropertyTypeX on PropertyType {
   String get label {
-    switch (this) {
-      case PropertyType.commercial:
-        return 'Commercial';
-      case PropertyType.residential:
-        return 'Residential';
-      case PropertyType.buy:
-        return 'Buy';
-      case PropertyType.rent:
-        return 'Rent';
-    }
+    return this.label;
   }
 
   IconData get icon {
-    switch (this) {
-      case PropertyType.commercial:
-        return Icons.business;
-      case PropertyType.residential:
-        return Icons.home;
-      case PropertyType.buy:
-        return Icons.shopping_cart;
-      case PropertyType.rent:
-        return Icons.key;
-    }
+    return this.icon;
   }
 }

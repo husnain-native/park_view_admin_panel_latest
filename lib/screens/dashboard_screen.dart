@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
-import 'users_screen.dart';
-import 'chats_screen.dart';
-import 'analytics_screen.dart';
-import 'city_cards_screen.dart';
+import 'package:park_view_admin_panel/screens/city_cards_screen.dart';
+import 'package:park_view_admin_panel/screens/request_screen.dart';
+import 'package:park_view_admin_panel/screens/users_screen.dart';
+import 'package:park_view_admin_panel/screens/chats_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -20,8 +21,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const DashboardHome(),
     const UsersScreen(),
     const ChatsScreen(),
-    const AnalyticsScreen(),
     const PropertiesManagementScreen(),
+    const RequestsScreen(),
   ];
 
   @override
@@ -91,21 +92,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 label: Text('Chats'),
               ),
               NavigationRailDestination(
-                icon: Icon(Icons.analytics),
-                label: Text('Analytics'),
-              ),
-              NavigationRailDestination(
                 icon: Icon(Icons.location_city),
                 label: Text('City Cards'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.notification_add),
+                label: Text('Requests'),
               ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
           Expanded(
-            child:
-                _selectedIndex == 0
-                    ? const DashboardHome()
-                    : _screens[_selectedIndex],
+            child: _screens[_selectedIndex],
           ),
         ],
       ),
@@ -173,6 +171,17 @@ class DashboardHome extends StatelessWidget {
                 () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const PropertiesManagementScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.notification_add,
+                'Property Requests',
+                Colors.red,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RequestsScreen()),
                   );
                 },
               ),

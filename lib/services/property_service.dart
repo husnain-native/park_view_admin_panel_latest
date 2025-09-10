@@ -74,4 +74,9 @@ class PropertyService {
       return false;
     }
   }
+
+  // Get properties stream for real-time updates
+  static Stream<DatabaseEvent> getPropertiesStream() {
+    return _propertiesRef.onValue;
+  }
 }
