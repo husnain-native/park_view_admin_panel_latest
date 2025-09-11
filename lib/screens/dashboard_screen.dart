@@ -188,25 +188,13 @@ class DashboardHome extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _statTile('Total Users', Icons.people_alt, Colors.blue),
-              _statTile(
-                'Active Groups',
-                Icons.groups_2_outlined,
-                Colors.purple,
-              ),
-              _statTile(
-                'Unread Inbox',
-                Icons.mark_chat_unread_outlined,
-                Colors.green,
-              ),
-            ],
+          Container(
+            width: double.infinity,
+            height: 500,
+            child: Image.asset(
+              'assets/images/park.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
         ],
       ),
@@ -250,48 +238,6 @@ class DashboardHome extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _statTile(String title, IconData icon, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.12),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  '—',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Tap to view details',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
