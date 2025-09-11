@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:park_chatapp/constants/app_colors.dart';
-// import 'package:park_chatapp/constants/app_text_styles.dart';
-// import 'package:park_chatapp/core/services/property_service.dart';
-// import 'package:park_chatapp/features/property/domain/models/property.dart';
-// import 'package:park_chatapp/features/property/presentation/screens/property_detail_screen.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'dart:async';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
 import 'package:park_view_admin_panel/constants/app_text_styles.dart';
 import 'package:park_view_admin_panel/models/property.dart';
 import 'package:park_view_admin_panel/services/property_service.dart';
+import 'dart:async';
 
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
@@ -85,41 +79,149 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 
   Future<void> _updateStatus(Property property, PropertyApprovalStatus status) async {
-    final updatedProperty = Property(
-      id: property.id,
-      title: property.title,
-      description: property.description,
-      price: property.price,
-      type: property.type,
-      status: property.status,
-      location: property.location,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      area: property.area,
-      imageUrls: property.imageUrls,
-      agentName: property.agentName,
-      agentId: property.agentId,
-      createdAt: property.createdAt,
-      isFeatured: property.isFeatured,
-      amenities: property.amenities,
-      approvalStatus: status,
-      createdBy: property.createdBy,
-    );
-    final success = await PropertyService.updateProperty(updatedProperty);
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Property ${status == PropertyApprovalStatus.approved ? 'approved' : 'rejected'} successfully'),
-          backgroundColor: Colors.green,
-        ),
+    if (status == PropertyApprovalStatus.rejected) {
+      // Show dialog to capture rejection reason
+      String? reason;
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          String tempReason = '';
+          return AlertDialog(
+            title: const Text('Reject Property'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Please provide a reason for rejecting this property:'),
+                const SizedBox(height: 8),
+                TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Enter rejection reason',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  onChanged: (value) => tempReason = value,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (tempReason.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please provide a rejection reason')),
+                    );
+                    return;
+                  }
+                  reason = tempReason.trim();
+                  Navigator.pop(context, true);
+                },
+                child: const Text('Reject'),
+              ),
+            ],
+          );
+        },
       );
+
+      if (confirmed != true || reason == null) {
+        return; // User cancelled or no reason provided
+      }
+
+      // Update property status
+      final updatedProperty = Property(
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        price: property.price,
+        type: property.type,
+        status: property.status,
+        location: property.location,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        area: property.area,
+        imageUrls: property.imageUrls,
+        agentName: property.agentName,
+        agentId: property.agentId,
+        createdAt: property.createdAt,
+        isFeatured: property.isFeatured,
+        amenities: property.amenities,
+        approvalStatus: status,
+        createdBy: property.createdBy,
+      );
+
+      // Save rejection message to Firebase
+      final messageRef = FirebaseDatabase.instance.ref('messages/${property.createdBy}/${property.id}');
+      final messageData = {
+        'propertyId': property.id,
+        'message': 'Your property "${property.title}" was rejected. Reason: $reason',
+        'timestamp': DateTime.now().toIso8601String(),
+        'isRead': false,
+      };
+
+      try {
+        await Future.wait([
+          PropertyService.updateProperty(updatedProperty),
+          messageRef.set(messageData),
+        ]);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Property rejected successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to reject property: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update property status'),
-          backgroundColor: Colors.red,
-        ),
+      // Handle approval (unchanged)
+      final updatedProperty = Property(
+        id: property.id,
+        title: property.title,
+        description: property.description,
+        price: property.price,
+        type: property.type,
+        status: property.status,
+        location: property.location,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        area: property.area,
+        imageUrls: property.imageUrls,
+        agentName: property.agentName,
+        agentId: property.agentId,
+        createdAt: property.createdAt,
+        isFeatured: property.isFeatured,
+        amenities: property.amenities,
+        approvalStatus: status,
+        createdBy: property.createdBy,
       );
+      final success = await PropertyService.updateProperty(updatedProperty);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Property ${status == PropertyApprovalStatus.approved ? 'approved' : 'rejected'} successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update property status'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -141,7 +243,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
               Container(
                 width: double.infinity,
                 color: Colors.yellow.shade100,
-                padding: EdgeInsets.symmetric(horizontal: 12  , vertical: 8 ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
                     const SizedBox(width: 4),
@@ -150,7 +252,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    SizedBox(width: 8  ),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Loading requests...',
@@ -164,11 +266,11 @@ class _RequestsScreenState extends State<RequestsScreen> {
               Container(
                 width: double.infinity,
                 color: Colors.red.shade100,
-                padding: EdgeInsets.symmetric(horizontal: 12  , vertical: 8 ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline, size: 16, color: Colors.red),
-                    SizedBox(width: 8  ),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _error!,
@@ -187,9 +289,9 @@ class _RequestsScreenState extends State<RequestsScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.search_off, size: 64, color: Colors.grey),
-                          SizedBox(height: 16 ),
+                          SizedBox(height: 16),
                           Text('No pending requests', style: AppTextStyles.bodyMediumBold),
-                          SizedBox(height: 8 ),
+                          SizedBox(height: 8),
                           Text(
                             'No user-submitted properties to review',
                             style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
@@ -198,7 +300,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                       ),
                     )
                   : ListView.builder(
-                      padding: EdgeInsets.all(16  ),
+                      padding: EdgeInsets.all(16),
                       itemCount: _properties.length,
                       itemBuilder: (context, index) {
                         final property = _properties[index];
@@ -208,7 +310,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                 ? Image.asset(
                                     property.imageUrls[0],
                                     width: 60,
-                                    height: 60 ,
+                                    height: 60,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 24),
                                   )
@@ -234,14 +336,6 @@ class _RequestsScreenState extends State<RequestsScreen> {
                                 ),
                               ],
                             ),
-                            // onTap: () {
-                            //   Navigator.push(
-                            //     context,
-                            //     MaterialPageRoute(
-                            //       builder: (_) => PropertyDetailScreen(property: property),
-                            //     ),
-                            //   );
-                            // },
                           ),
                         );
                       },
