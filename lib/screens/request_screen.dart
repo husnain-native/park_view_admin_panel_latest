@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
 import 'package:park_view_admin_panel/constants/app_text_styles.dart';
 import 'package:park_view_admin_panel/models/property.dart';
+import 'package:park_view_admin_panel/screens/property_detail_screen.dart';
 import 'package:park_view_admin_panel/services/property_service.dart';
 import 'dart:async';
 
@@ -185,7 +186,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
         }
       }
     } else {
-      // Handle approval (unchanged)
+      // Handle approval
       final updatedProperty = Property(
         id: property.id,
         title: property.title,
@@ -304,37 +305,47 @@ class _RequestsScreenState extends State<RequestsScreen> {
                       itemCount: _properties.length,
                       itemBuilder: (context, index) {
                         final property = _properties[index];
-                        return Card(
-                          child: ListTile(
-                            leading: property.imageUrls.isNotEmpty
-                                ? Image.asset(
-                                    property.imageUrls[0],
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 24),
-                                  )
-                                : Icon(Icons.image, size: 24),
-                            title: Text(property.title, style: AppTextStyles.bodyMediumBold),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Created by: ${property.agentName}', style: AppTextStyles.bodySmall),
-                                Text(property.formattedPrice, style: AppTextStyles.bodySmall),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.check, color: Colors.green, size: 24),
-                                  onPressed: () => _updateStatus(property, PropertyApprovalStatus.approved),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.close, color: Colors.red, size: 24),
-                                  onPressed: () => _updateStatus(property, PropertyApprovalStatus.rejected),
-                                ),
-                              ],
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PropertyDetailScreen(property: property),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            child: ListTile(
+                              leading: property.imageUrls.isNotEmpty
+                                  ? Image.asset(
+                                      property.imageUrls[0],
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image, size: 24),
+                                    )
+                                  : Icon(Icons.image, size: 24),
+                              title: Text(property.title, style: AppTextStyles.bodyMediumBold),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Created by: ${property.agentName}', style: AppTextStyles.bodySmall),
+                                  Text(property.formattedPrice, style: AppTextStyles.bodySmall),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.check, color: Colors.green, size: 24),
+                                    onPressed: () => _updateStatus(property, PropertyApprovalStatus.approved),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close, color: Colors.red, size: 24),
+                                    onPressed: () => _updateStatus(property, PropertyApprovalStatus.rejected),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );

@@ -367,8 +367,8 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen> {
                 ),
                 SizedBox(height: 16),
                 _buildTextField('Agent Name', _agentNameController, 'Enter agent name'),
-                SizedBox(height: 16),
-                _buildTextField('Agent ID', _agentIdController, 'Enter agent ID'),
+                // SizedBox(height: 16),
+                // _buildTextField('Agent ID', _agentIdController, 'Enter agent ID'),
                 SizedBox(height: 16),
                 Row(
                   children: [

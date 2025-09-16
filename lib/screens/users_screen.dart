@@ -131,55 +131,43 @@ class _UsersScreenState extends State<UsersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Users Management'),
+        backgroundColor: AppColors.primaryBlue,
+        foregroundColor: Colors.white,
+        actions: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${_filteredUsers.length} Users',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: _loadUsers,
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Users Management',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.black,
-                ),
-              ),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlue,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_filteredUsers.length} Users',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                    onPressed: _loadUsers,
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: AppColors.primaryBlue,
-                    ),
-                    tooltip: 'Refresh',
-                  ),
-                
-                ],
-              ),
-            ],
+            children: [],
           ),
           const SizedBox(height: 24),
 
@@ -219,220 +207,216 @@ class _UsersScreenState extends State<UsersScreen> {
 
           // Users List
           Expanded(
-            child:
-                _isLoading
-                    ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryBlue,
-                      ),
-                    )
-                    : _filteredUsers.isEmpty
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryBlue,
+                    ),
+                  )
+                : _filteredUsers.isEmpty
                     ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.people_outline,
-                            size: 80,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _searchQuery.isEmpty
-                                ? 'No users found'
-                                : 'No users match your search',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 80,
+                              color: Colors.grey[400],
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : ListView.builder(
-                      itemCount: _filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        final user = _filteredUsers[index];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                spreadRadius: 1,
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(20),
-                            leading: CircleAvatar(
-                              radius: 30,
-                              backgroundColor: AppColors.primaryBlue.withOpacity(0.1),
-                              child: Text(
-                                _initialsFrom(user),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryBlue,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              (user['displayName'] as String?)?.isNotEmpty == true
-                                  ? user['displayName'] as String
-                                  : 'No Name',
-                              style: const TextStyle(
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isEmpty
+                                  ? 'No users found'
+                                  : 'No users match your search',
+                              style: TextStyle(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.black,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.email,
-                                      size: 16,
-                                      color: AppColors.grey,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        (user['email'] as String?) ?? 'No email',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.grey,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      (user['emailVerified'] == true)
-                                          ? Icons.verified
-                                          : Icons.warning,
-                                      size: 16,
-                                      color:
-                                          (user['emailVerified'] == true)
-                                              ? Colors.green
-                                              : Colors.orange,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      (user['emailVerified'] == true)
-                                          ? 'Email Verified'
-                                          : 'Email Not Verified',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color:
-                                            (user['emailVerified'] == true)
-                                                ? Colors.green
-                                                : Colors.orange,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today,
-                                      size: 16,
-                                      color: AppColors.grey,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Joined: ${_formatDate(user['creationTime'])}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.access_time,
-                                      size: 16,
-                                      color: AppColors.grey,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Last active: ${_formatTimeAgo(user['lastSignInTime'])}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.grey,
-                                      ),
-                                    ),
-                                  ],
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredUsers.length,
+                        itemBuilder: (context, index) {
+                          final user = _filteredUsers[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            trailing: PopupMenuButton<String>(
-                              icon: const Icon(
-                                Icons.more_vert,
-                                color: AppColors.grey,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(20),
+                              leading: CircleAvatar(
+                                radius: 30,
+                                backgroundColor:
+                                    AppColors.primaryBlue.withOpacity(0.1),
+                                child: Text(
+                                  _initialsFrom(user),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryBlue,
+                                  ),
+                                ),
                               ),
-                              onSelected: (value) {
-                                // Handle menu actions
-                                switch (value) {
-                                  case 'view':
-                                    _showUserDetails(user);
-                                    break;
-                                  case 'edit':
-                                    // TODO: Implement edit user
-                                    break;
-                                  case 'delete':
-                                    _showDeleteConfirmation(user);
-                                    break;
-                                }
-                              },
-                              itemBuilder:
-                                  (context) => [
-    
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.delete,
-                                            size: 20,
-                                            color: Colors.red,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Delete User',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                        ],
+                              title: Text(
+                                (user['displayName'] as String?)?.isNotEmpty == true
+                                    ? user['displayName'] as String
+                                    : 'No Name',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.black,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.email,
+                                        size: 16,
+                                        color: AppColors.grey,
                                       ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          (user['email'] as String?) ?? 'No email',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: AppColors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        (user['emailVerified'] == true)
+                                            ? Icons.verified
+                                            : Icons.warning,
+                                        size: 16,
+                                        color: (user['emailVerified'] == true)
+                                            ? Colors.green
+                                            : Colors.orange,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        (user['emailVerified'] == true)
+                                            ? 'Email Verified'
+                                            : 'Email Not Verified',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: (user['emailVerified'] == true)
+                                              ? Colors.green
+                                              : Colors.orange,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        size: 16,
+                                        color: AppColors.grey,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Joined: ${_formatDate(user['creationTime'])}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.access_time,
+                                        size: 16,
+                                        color: AppColors.grey,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Last active: ${_formatTimeAgo(user['lastSignInTime'])}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              trailing: PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: AppColors.grey,
+                                ),
+                                onSelected: (value) {
+                                  // Handle menu actions
+                                  switch (value) {
+                                    case 'view':
+                                      _showUserDetails(user);
+                                      break;
+                                    case 'edit':
+                                      // TODO: Implement edit user
+                                      break;
+                                    case 'delete':
+                                      _showDeleteConfirmation(user);
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.delete,
+                                          size: 20,
+                                          color: Colors.red,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Delete User',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
           ),
         ],
       ),
-    );
+    ));
   }
-
+ 
   void _showUserDetails(Map<String, dynamic> user) {
     showDialog(
       context: context,

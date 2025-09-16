@@ -5,7 +5,9 @@ import '../services/chat_service.dart';
 import 'admin_chat_screen.dart';
 
 class ChatsScreen extends StatefulWidget {
-  const ChatsScreen({Key? key}) : super(key: key);
+  const ChatsScreen({Key? key, this.initialTabIndex = 0}) : super(key: key);
+
+  final int initialTabIndex;
 
   @override
   State<ChatsScreen> createState() => _ChatsScreenState();
@@ -20,7 +22,7 @@ class _ChatsScreenState extends State<ChatsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTabIndex);
   }
 
   @override
@@ -53,16 +55,17 @@ class _ChatsScreenState extends State<ChatsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Chats Management',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chats Management'),
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           TabBar(
             controller: _tabController,
             tabs: const [Tab(text: 'Inbox'), Tab(text: 'Groups')],
@@ -76,7 +79,7 @@ class _ChatsScreenState extends State<ChatsScreen>
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildGroupsTab() {

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
+import 'package:park_view_admin_panel/screens/ComplaintsManagementScreen.dart';
+import 'package:park_view_admin_panel/screens/FeedbackManagementScreen.dart';
 import 'package:park_view_admin_panel/screens/city_cards_screen.dart';
+import 'package:park_view_admin_panel/screens/lost_found_scren.dart';
 import 'package:park_view_admin_panel/screens/request_screen.dart';
 import 'package:park_view_admin_panel/screens/users_screen.dart';
 import 'package:park_view_admin_panel/screens/chats_screen.dart';
-
+import 'package:park_view_admin_panel/screens/emergency_alerts_screen.dart';
+import 'package:park_view_admin_panel/screens/admin_incident_screen.dart'; // New import
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,6 +27,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const ChatsScreen(),
     const PropertiesManagementScreen(),
     const RequestsScreen(),
+    const ComplaintsManagementScreen(),
+    const FeedbackManagementScreen(),
+    const AdminLostFoundScreen(),
+    const EmergencyAlertsScreen(),
+    const AdminIncidentScreen(), // Added Admin Incident screen
   ];
 
   @override
@@ -99,6 +108,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Icon(Icons.notification_add),
                 label: Text('Requests'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.report),
+                label: Text('Complaints'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.feedback),
+                label: Text('Feedback'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.search),
+                label: Text('Lost & Found'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.notifications_active),
+                label: Text('Emergency Alerts'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.report),
+                label: Text('Incidents'), // Added Incidents destination
+              ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -159,7 +188,7 @@ class DashboardHome extends StatelessWidget {
                 Colors.purple,
                 () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ChatsScreen()),
+                    MaterialPageRoute(builder: (_) => const ChatsScreen(initialTabIndex: 1)),
                   );
                 },
               ),
@@ -182,6 +211,61 @@ class DashboardHome extends StatelessWidget {
                 () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const RequestsScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.report,
+                'Manage Complaints',
+                Colors.redAccent,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ComplaintsManagementScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.feedback,
+                'Manage Feedback',
+                Colors.teal,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FeedbackManagementScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.search,
+                'Manage Lost & Found',
+                Colors.indigo,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminLostFoundScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.notifications_active,
+                'Manage Alerts',
+                Colors.redAccent,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EmergencyAlertsScreen()),
+                  );
+                },
+              ),
+              _quickAction(
+                context,
+                Icons.report,
+                'Manage Incidents', // Added Incidents quick action
+                Colors.pinkAccent,
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminIncidentScreen()),
                   );
                 },
               ),
