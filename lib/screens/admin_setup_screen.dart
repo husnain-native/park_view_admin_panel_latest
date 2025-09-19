@@ -137,7 +137,7 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create First Admin'),
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
       ),
       body: Center(

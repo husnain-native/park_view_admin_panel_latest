@@ -162,7 +162,7 @@ class _AdminLostFoundScreenState extends State<AdminLostFoundScreen>
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Admin Lost & Found',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
@@ -255,7 +255,7 @@ class _AdminLostFoundCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(
+                Expanded( 
                   child: Text(item.title, style: AppTextStyles.bodyMediumBold),
                 ),
                 Container(

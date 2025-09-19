@@ -283,7 +283,7 @@ class _AddEditPropertyScreenState extends State<AddEditPropertyScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           widget.property == null ? 'Add Property' : 'Edit Property',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

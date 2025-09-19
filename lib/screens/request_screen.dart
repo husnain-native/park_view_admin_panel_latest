@@ -231,7 +231,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Property Requests',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

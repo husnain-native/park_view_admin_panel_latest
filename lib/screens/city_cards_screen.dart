@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:park_view_admin_panel/constants/app_colors.dart';
+import 'package:park_view_admin_panel/constants/app_text_styles.dart';
 import 'package:park_view_admin_panel/models/property.dart';
 import 'package:park_view_admin_panel/screens/AddEditPropertyScreen.dart';
 import '../services/property_service.dart';
@@ -108,14 +110,14 @@ class _PropertiesManagementScreenState extends State<PropertiesManagementScreen>
       final bool isAsset = imageUrls.first.startsWith('assets/');
       
       return Container(
-        width: 80,
-        height: 60,
+        width: 120,
+        height: 90,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(2),
+          // border: Border.all(color: Colors.grey.shade300),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(2),
           child: isAsset
             ? Image.asset(
                 imageUrls.first,
@@ -141,8 +143,8 @@ class _PropertiesManagementScreenState extends State<PropertiesManagementScreen>
       );
     } else {
       return Container(
-        width: 80,
-        height: 60,
+        width: 120,
+        height: 90,
         decoration: BoxDecoration(
           color: Colors.grey.shade200,
           borderRadius: BorderRadius.circular(8),
@@ -166,7 +168,10 @@ class _PropertiesManagementScreenState extends State<PropertiesManagementScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Properties Management'),
+        backgroundColor: AppColors.primaryBlue,
+        title:  Text('Properties Management',
+        style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -181,6 +186,14 @@ class _PropertiesManagementScreenState extends State<PropertiesManagementScreen>
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    elevation: 1,
+                    backgroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(2),
+                      side: const BorderSide(color: AppColors.primaryBlue, width: 1),
+                    ),
+                  ),
                   onPressed: () async {
                     final result = await Navigator.of(context).push(
                       MaterialPageRoute(
@@ -189,8 +202,8 @@ class _PropertiesManagementScreenState extends State<PropertiesManagementScreen>
                     );
                     if (result == true) _loadProperties();
                   },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add New Property'),
+                  icon: const Icon(Icons.add, color: AppColors.primaryBlue,),
+                  label: const Text('Add New Property', style: TextStyle(color: AppColors.primaryBlue),),
                 ),
               ],
             ),

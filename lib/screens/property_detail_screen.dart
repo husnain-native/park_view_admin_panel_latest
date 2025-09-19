@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
 import 'package:park_view_admin_panel/constants/app_text_styles.dart';
 import 'package:park_view_admin_panel/models/property.dart';
-// import 'package:park_view_admin_panel/screens/chats_screen.dart';
-// import 'package:park_view_admin_panel/features/property/domain/models/property.dart';
 
 class PropertyDetailScreen extends StatelessWidget {
   final Property property;
@@ -14,7 +12,7 @@ class PropertyDetailScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Property Details',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

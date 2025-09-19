@@ -165,7 +165,7 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Complaints Management',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

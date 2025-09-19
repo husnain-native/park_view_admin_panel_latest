@@ -200,7 +200,7 @@ class _EmergencyAlertsScreenState extends State<EmergencyAlertsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Emergency Alerts',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

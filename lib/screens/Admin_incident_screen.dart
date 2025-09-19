@@ -183,7 +183,7 @@ class _AdminIncidentScreenState extends State<AdminIncidentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Admin Incident Management',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),

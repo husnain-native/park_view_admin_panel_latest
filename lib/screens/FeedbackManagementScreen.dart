@@ -223,7 +223,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryRed,
+        backgroundColor: AppColors.primaryBlue,
         title: Text(
           'Feedback Management',
           style: AppTextStyles.bodyLarge.copyWith(color: Colors.white),
