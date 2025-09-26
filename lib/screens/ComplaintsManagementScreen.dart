@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:park_view_admin_panel/constants/app_colors.dart';
 import 'package:park_view_admin_panel/constants/app_text_styles.dart';
 import 'dart:async';
@@ -9,10 +8,12 @@ class ComplaintsManagementScreen extends StatefulWidget {
   const ComplaintsManagementScreen({super.key});
 
   @override
-  State<ComplaintsManagementScreen> createState() => _ComplaintsManagementScreenState();
+  State<ComplaintsManagementScreen> createState() =>
+      _ComplaintsManagementScreenState();
 }
 
-class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen> {
+class _ComplaintsManagementScreenState
+    extends State<ComplaintsManagementScreen> {
   final List<Map<String, dynamic>> _complaints = [];
   bool _isLoading = true;
   String? _error;
@@ -34,59 +35,75 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
     _complaintsSubscription = FirebaseDatabase.instance
         .ref('complaints')
         .onValue
-        .listen((event) {
-      if (!mounted) return;
-      try {
-        final Object? raw = event.snapshot.value;
-        final List<Map<String, dynamic>> complaints = [];
-        if (raw != null && raw is Map) {
-          final Map<dynamic, dynamic> usersMap = raw;
-          usersMap.forEach((userKey, userValue) {
-            if (userValue is Map) {
-              final Map<dynamic, dynamic> userComplaints = userValue;
-              userComplaints.forEach((complaintKey, complaintValue) {
-                try {
-                  final data = Map<String, dynamic>.from(complaintValue as Map);
-                  data['id'] = complaintKey.toString();
-                  data['userId'] = userKey.toString();
-                  complaints.add(data);
-                } catch (e) {
-                  print('Error parsing complaint $complaintKey for user $userKey: $e');
-                }
+        .listen(
+          (event) {
+            if (!mounted) return;
+            try {
+              final Object? raw = event.snapshot.value;
+              final List<Map<String, dynamic>> complaints = [];
+              if (raw != null && raw is Map) {
+                final Map<dynamic, dynamic> usersMap = raw;
+                usersMap.forEach((userKey, userValue) {
+                  if (userValue is Map) {
+                    final Map<dynamic, dynamic> userComplaints = userValue;
+                    userComplaints.forEach((complaintKey, complaintValue) {
+                      try {
+                        final data = Map<String, dynamic>.from(
+                          complaintValue as Map,
+                        );
+                        data['id'] = complaintKey.toString();
+                        data['userId'] = userKey.toString();
+                        complaints.add(data);
+                      } catch (e) {
+                        print(
+                          'Error parsing complaint $complaintKey for user $userKey: $e',
+                        );
+                      }
+                    });
+                  }
+                });
+              }
+              complaints.sort((a, b) {
+                return DateTime.parse(
+                  b['timestamp'] ?? DateTime.now().toIso8601String(),
+                ).compareTo(
+                  DateTime.parse(
+                    a['timestamp'] ?? DateTime.now().toIso8601String(),
+                  ),
+                );
+              });
+              setState(() {
+                _complaints
+                  ..clear()
+                  ..addAll(complaints);
+                _isLoading = false;
+                _error = null;
+              });
+            } catch (e) {
+              setState(() {
+                _isLoading = false;
+                _error = 'Failed to load complaints: $e';
               });
             }
-          });
-        }
-        complaints.sort((a, b) {
-          return DateTime.parse(b['timestamp'] ?? DateTime.now().toIso8601String()).compareTo(
-            DateTime.parse(a['timestamp'] ?? DateTime.now().toIso8601String()),
-          );
-        });
-        setState(() {
-          _complaints
-            ..clear()
-            ..addAll(complaints);
-          _isLoading = false;
-          _error = null;
-        });
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Failed to load complaints: $e';
-        });
-      }
-    }, onError: (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _error = 'Stream error: $e';
-      });
-    });
+          },
+          onError: (e) {
+            if (!mounted) return;
+            setState(() {
+              _isLoading = false;
+              _error = 'Stream error: $e';
+            });
+          },
+        );
   }
 
-  Future<void> _updateStatus(Map<String, dynamic> complaint, String newStatus) async {
+  Future<void> _updateStatus(
+    Map<String, dynamic> complaint,
+    String newStatus,
+  ) async {
     try {
-      final complaintRef = FirebaseDatabase.instance.ref('complaints/${complaint['userId']}/${complaint['id']}');
+      final complaintRef = FirebaseDatabase.instance.ref(
+        'complaints/${complaint['userId']}/${complaint['id']}',
+      );
       await complaintRef.update({'status': newStatus});
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -101,32 +118,71 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
     }
   }
 
+  Future<void> _replyToComplaint(
+    Map<String, dynamic> complaint,
+    String reply,
+  ) async {
+    try {
+      final complaintRef = FirebaseDatabase.instance.ref(
+        'complaints/${complaint['userId']}/${complaint['id']}',
+      );
+      await complaintRef.update({
+        'reply': reply,
+        'replyTimestamp': DateTime.now().toIso8601String(),
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reply added successfully'),
+          backgroundColor: Color.fromARGB(255, 48, 120, 6),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add reply: $e')));
+    }
+  }
+
   Future<void> _deleteComplaint(Map<String, dynamic> complaint) async {
     bool? confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirm Deletion', style: AppTextStyles.bodyMediumBold),
-        content: Text(
-          'Are you sure you want to delete the complaint "${complaint['title']}"?',
-          style: AppTextStyles.bodySmall,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancel', style: AppTextStyles.bodySmall.copyWith(color: Colors.grey)),
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              'Confirm Deletion',
+              style: AppTextStyles.bodyMediumBold,
+            ),
+            content: Text(
+              'Are you sure you want to delete the complaint "${complaint['title']}"?',
+              style: AppTextStyles.bodySmall,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  'Delete',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: const Color.fromARGB(255, 139, 2, 2),
+                  ),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Delete', style: AppTextStyles.bodySmall.copyWith(color: const Color.fromARGB(255, 139, 2, 2))),
-          ),
-        ],
-      ),
     );
 
     if (confirm != true) return;
 
     try {
-      final complaintRef = FirebaseDatabase.instance.ref('complaints/${complaint['userId']}/${complaint['id']}');
+      final complaintRef = FirebaseDatabase.instance.ref(
+        'complaints/${complaint['userId']}/${complaint['id']}',
+      );
       await complaintRef.remove();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -135,28 +191,9 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete complaint: $e')),
-      );
-    }
-  }
-
-  String _formatTimestamp(String? timestamp) {
-    try {
-      final dt = DateTime.parse(timestamp ?? DateTime.now().toIso8601String());
-      final now = DateTime.now();
-      final difference = now.difference(dt);
-      if (difference.inDays > 0) {
-        return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
-      } else {
-        return 'Just now';
-      }
-    } catch (e) {
-      return 'Unknown';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete complaint: $e')));
     }
   }
 
@@ -178,7 +215,10 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
               Container(
                 width: double.infinity,
                 color: Colors.yellow.shade100,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     const SizedBox(width: 4),
@@ -201,46 +241,68 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
               Container(
                 width: double.infinity,
                 color: Colors.red.shade100,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline, size: 16, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 16,
+                      color: Colors.red,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _error!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodySmall.copyWith(color: Colors.red),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             Expanded(
-              child: _complaints.isEmpty && !_isLoading
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off, size: 64, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text('No complaints found', style: AppTextStyles.bodyMediumBold),
-                        ],
+              child:
+                  _complaints.isEmpty && !_isLoading
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No complaints found',
+                              style: AppTextStyles.bodyMediumBold,
+                            ),
+                          ],
+                        ),
+                      )
+                      : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _complaints.length,
+                        itemBuilder: (context, index) {
+                          final complaint = _complaints[index];
+                          return _ComplaintCard(
+                            complaint: complaint,
+                            onResolve:
+                                () => _updateStatus(complaint, 'Resolved'),
+                            onReply:
+                                (reply) => _replyToComplaint(complaint, reply),
+                            onUpdateStatus:
+                                (status) => _updateStatus(complaint, status),
+                            onDelete: () => _deleteComplaint(complaint),
+                          );
+                        },
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _complaints.length,
-                      itemBuilder: (context, index) {
-                        final complaint = _complaints[index];
-                        return _ComplaintCard(
-                          complaint: complaint,
-                          onResolve: () => _updateStatus(complaint, 'Resolved'),
-                          onDelete: () => _deleteComplaint(complaint),
-                        );
-                      },
-                    ),
             ),
           ],
         ),
@@ -252,11 +314,15 @@ class _ComplaintsManagementScreenState extends State<ComplaintsManagementScreen>
 class _ComplaintCard extends StatelessWidget {
   final Map<String, dynamic> complaint;
   final VoidCallback onResolve;
+  final Function(String) onReply;
+  final Function(String) onUpdateStatus;
   final VoidCallback onDelete;
 
   const _ComplaintCard({
     required this.complaint,
     required this.onResolve,
+    required this.onReply,
+    required this.onUpdateStatus,
     required this.onDelete,
   });
 
@@ -264,6 +330,8 @@ class _ComplaintCard extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'pending':
         return Colors.orange;
+      case 'processing':
+        return Colors.blue;
       case 'inprogress':
         return Colors.blue;
       case 'resolved':
@@ -307,6 +375,54 @@ class _ComplaintCard extends StatelessWidget {
     }
   }
 
+  void _showReplyDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              'Reply to Complaint',
+              style: AppTextStyles.bodyMediumBold,
+            ),
+            content: TextField(
+              controller: controller,
+              minLines: 3,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: 'Enter your reply',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (controller.text.trim().isNotEmpty) {
+                    onReply(controller.text.trim());
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: Text(
+                  'Submit',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primaryRed,
+                  ),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final status = complaint['status'] ?? 'Pending';
@@ -330,7 +446,10 @@ class _ComplaintCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -362,7 +481,10 @@ class _ComplaintCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               'Description: ${complaint['description'] ?? 'No description'}',
-              style: AppTextStyles.bodySmall.copyWith(color: Colors.black87, height: 1.3),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: Colors.black87,
+                height: 1.3,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -373,28 +495,89 @@ class _ComplaintCard extends StatelessWidget {
               'Submitted: ${_formatTimestamp(complaint['timestamp'])}',
               style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
             ),
+            if (complaint['reply'] != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Reply: ${complaint['reply']}',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primaryRed,
+                  height: 1.3,
+                ),
+              ),
+              Text(
+                'Replied: ${_formatTimestamp(complaint['replyTimestamp'])}',
+                style: AppTextStyles.bodySmall.copyWith(color: Colors.grey),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (status != 'Resolved')
+                OutlinedButton(
+                  onPressed: () => _showReplyDialog(context),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primaryRed),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: Text(
+                    'Reply',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.primaryRed,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (status == 'Pending')
+                  ElevatedButton(
+                    onPressed: () => onUpdateStatus('Processing'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
+                    child: const Text('Mark as Processing'),
+                  ),
+                if (status == 'Pending') const SizedBox(width: 8),
+                if (status == 'Processing')
                   ElevatedButton(
                     onPressed: onResolve,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryRed,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     child: const Text('Mark as Resolved'),
                   ),
-                if (status != 'Resolved') const SizedBox(width: 8),
+                if (status == 'Processing') const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: onDelete,
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                   ),
                   child: Text(
                     'Delete',
